@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROBOKRITI SafeCircle — Interactive Browser Presentation</title>
+<style>
+  :root {
+    --bg-outer: #0b0e14;
+    --slide-bg: #111622;
+    --card-bg: #192133;
+    --card-border: #28344f;
+    --text-main: #f3f6fc;
+    --text-muted: #9aa7c2;
+    --accent-blue: #3b82f6;
+    --accent-teal: #14b8a6;
+    --accent-amber: #f59e0b;
+    --accent-red: #ef4444;
+    --accent-green: #22c55e;
+    --accent-purple: #a855f7;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-outer);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+  }
+
+  /* Top Navigation Bar */
+  .topbar {
+    height: 48px;
+    padding: 0 20px;
+    background: #0d121d;
+    border-bottom: 1px solid #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    z-index: 20;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.03em;
+  }
+
+  .brand-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
+    box-shadow: 0 0 10px rgba(20,184,166,0.7);
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn {
+    background: #1a2336;
+    color: #dbe6fa;
+    border: 1px solid #2d3c5c;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn:hover { background: #24324d; border-color: var(--accent-blue); }
+  .btn:active { transform: translateY(1px); }
+
+  .slide-counter {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 68px;
+    text-align: center;
+  }
+
+  /* Progress Bar */
+  .progress-track {
+    height: 3px;
+    width: 100%;
+    background: #172033;
+    flex-shrink: 0;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-teal), var(--accent-blue));
+    transition: width 0.3s ease;
+    width: 8.33%;
+  }
+
+  /* Presentation Stage */
+  .stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .deck {
+    width: 100%;
+    max-width: 1220px;
+    height: 100%;
+    max-height: 690px;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, #18233a 0%, var(--slide-bg) 55%);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 34px 44px 28px 44px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    overflow-y: auto;
+  }
+
+  .slide.active {
+    display: flex;
+    animation: fadeIn 0.25s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent-teal);
+    margin-bottom: 6px;
+  }
+
+  .slide-title {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.18;
+    margin-bottom: 16px;
+    color: #ffffff;
+  }
+
+  .slide-sub {
+    font-size: 14.5px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    max-width: 860px;
+    margin-bottom: 18px;
+  }
+
+  /* Grids & Cards */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; flex: 1; min-height: 0; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; flex: 1; min-height: 0; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-accent-blue { border-top: 3px solid var(--accent-blue); }
+  .card-accent-teal { border-top: 3px solid var(--accent-teal); }
+  .card-accent-amber { border-top: 3px solid var(--accent-amber); }
+  .card-accent-red { border-top: 3px solid var(--accent-red); }
+  .card-accent-green { border-top: 3px solid var(--accent-green); }
+  .card-accent-purple { border-top: 3px solid var(--accent-purple); }
+
+  .kpi-num {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+
+  .kpi-lbl { font-size: 12.5px; font-weight: 600; color: #e2e8f0; margin-bottom: 4px; }
+  .kpi-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.4; }
+
+  .card h3 {
+    font-size: 15.5px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .b-blue { background: rgba(59,130,246,0.18); color: #93c5fd; border: 1px solid rgba(59,130,246,0.35); }
+  .b-teal { background: rgba(20,184,166,0.18); color: #5eead4; border: 1px solid rgba(20,184,166,0.35); }
+  .b-amber { background: rgba(245,158,11,0.18); color: #fcd34d; border: 1px solid rgba(245,158,11,0.35); }
+  .b-red { background: rgba(239,68,68,0.18); color: #fca5a5; border: 1px solid rgba(239,68,68,0.35); }
+  .b-green { background: rgba(34,197,94,0.18); color: #86efac; border: 1px solid rgba(34,197,94,0.35); }
+
+  ul.clean {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12.5px;
+    color: #cbd5e1;
+    line-height: 1.42;
+  }
+  ul.clean li { position: relative; padding-left: 14px; }
+  ul.clean li::before {
+    content: "•";
+    position: absolute; left: 0; top: 0;
+    color: var(--accent-teal); font-weight: 700;
+  }
+  ul.clean li strong { color: #ffffff; }
+
+  /* Tables */
+  table.deck-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  table.deck-table th, table.deck-table td {
+    padding: 7px 10px;
+    text-align: left;
+    border-bottom: 1px solid #24304a;
+    line-height: 1.35;
+  }
+  table.deck-table th {
+    background: #172034;
+    color: #93c5fd;
+    font-weight: 700;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  table.deck-table tr:nth-child(even) td { background: rgba(255,255,255,0.015); }
+  table.deck-table td:first-child { font-weight: 600; color: #f8fafc; }
+  .col-v3 { background: rgba(59,130,246,0.08) !important; color: #eff6ff; font-weight: 600; }
+
+  /* Hero Slide 1 */
+  .hero-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 18px;
+  }
+  .hero-title {
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    background: linear-gradient(95deg, #ffffff 30%, #5eead4 75%, #60a5fa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-tagline {
+    font-size: 20px;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+  .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+  .hero-pill {
+    background: #172236;
+    border: 1px solid #2d3f63;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    color: #e2e8f0;
+  }
+  .hero-pill strong { color: #5eead4; display: block; font-size: 14px; margin-bottom: 2px; }
+
+  /* Phone UI Mockups */
+  .phone-frame {
+    background: #0b0f19;
+    border: 2px solid #334155;
+    border-radius: 22px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  }
+  .phone-notch {
+    width: 64px; height: 5px; border-radius: 4px;
+    background: #334155; margin: 0 auto 4px auto;
+  }
+  .phone-hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10.5px; color: #94a3b8; font-weight: 600;
+  }
+  .status-banner-ok {
+    background: linear-gradient(135deg, #065f46, #047857);
+    border: 1px solid #10b981;
+    border-radius: 10px; padding: 10px;
+  }
+  .status-banner-sos {
+    background: linear-gradient(135deg, #991b1b, #b91c1c);
+    border: 1px solid #f87171;
+    border-radius: 10px; padding: 10px;
+  }
+  .phone-btn-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: auto;
+  }
+  .p-btn {
+    background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    padding: 8px 6px; text-align: center; font-size: 11px; font-weight: 700; color: #f8fafc;
+  }
+  .p-btn-primary { background: #2563eb; border-color: #60a5fa; }
+  .p-btn-green { background: #15803d; border-color: #4ade80; }
+  .p-btn-red { background: #dc2626; border-color: #f87171; }
+
+  /* Bars for Battery & Cost */
+  .bar-row { margin-bottom: 9px; }
+  .bar-meta {
+    display: flex; justify-content: space-between;
+    font-size: 11.5px; margin-bottom: 3px; color: #dbeafe;
+  }
+  .bar-track {
+    height: 11px; background: #0f172a; border-radius: 6px; overflow: hidden;
+    border: 1px solid #1e293b;
+  }
+  .bar-fill { height: 100%; border-radius: 6px; }
+
+  /* Escalation Timeline */
+  .flow-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .step-box {
+    background: #172033;
+    border: 1px solid #2b3a59;
+    border-radius: 10px;
+    padding: 12px;
+    position: relative;
+  }
+  .step-time {
+    font-size: 11px; font-weight: 800; color: var(--accent-amber);
+    margin-bottom: 4px; text-transform: uppercase;
+  }
+  .step-box h4 { font-size: 13px; margin-bottom: 4px; color: #ffffff; }
+  .step-box p { font-size: 11.5px; color: var(--text-muted); line-height: 1.38; }
+
+  /* Roadmap Grid */
+  .roadmap-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    flex: 1;
+  }
+  .phase-card {
+    background: #172033;
+    border: 1px solid #283654;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .phase-top {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; font-weight: 700; color: var(--accent-teal); margin-bottom: 4px;
+  }
+  .phase-card h4 { font-size: 13px; color: #fff; margin-bottom: 5px; }
+  .phase-card p { font-size: 11px; color: var(--text-muted); line-height: 1.38; margin-bottom: 8px; }
+  .phase-foot {
+    font-size: 11px; font-weight: 700; color: #93c5fd;
+    border-top: 1px solid #24304a; padding-top: 6px;
+    display: flex; justify-content: space-between;
+  }
+
+  /* Slide Footer */
+  .slide-footer {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid #1e293b;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  /* Overview Grid Overlay */
+  .overview-overlay {
+    position: fixed;
+    inset: 48px 0 0 0;
+    background: rgba(9, 13, 21, 0.96);
+    z-index: 40;
+    display: none;
+    padding: 24px 36px;
+    overflow-y: auto;
+  }
+  .overview-overlay.open { display: block; }
+  .overview-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+  }
+  .thumb {
+    background: #151c2c;
+    border: 1px solid #2b3957;
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .thumb:hover { border-color: var(--accent-teal); transform: translateY(-2px); }
+  .thumb.current { border-color: var(--accent-blue); box-shadow: 0 0 0 2px rgba(59,130,246,0.35); }
+  .thumb-num { font-size: 11px; font-weight: 700; color: var(--accent-teal); margin-bottom: 4px; }
+  .thumb-title { font-size: 13.5px; font-weight: 700; color: #f8fafc; line-height: 1.3; }
+
+  @media (max-width: 900px) {
+    .slide { padding: 20px; }
+    .slide-title { font-size: 21px; }
+    .hero-title { font-size: 30px; }
+    .grid-2, .grid-3, .grid-4, .flow-steps, .roadmap-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Print / Export to PDF */
+  @media print {
+    body { height: auto; overflow: visible; background: #fff; }
+    .topbar, .progress-track, .overview-overlay { display: none !important; }
+    .stage { display: block; padding: 0; overflow: visible; }
+    .deck { max-width: none; max-height: none; height: auto; }
+    .slide {
+      position: relative; display: flex !important;
+      page-break-after: always; break-after: page;
+      margin-bottom: 0; border-radius: 0; min-height: 100vh;
+      box-shadow: none;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-dot"></span>
+    <span>ROBOKRITI SafeCircle &mdash; Engineering Blueprint Deck</span>
+  </div>
+  <div class="controls">
+    <button class="btn" id="btnPrev" title="Previous Slide (Left Arrow)">&larr; Prev</button>
+    <span class="slide-counter" id="counter">1 / 12</span>
+    <button class="btn" id="btnNext" title="Next Slide (Right Arrow)">Next &rarr;</button>
+    <button class="btn" id="btnGrid" title="Slide Grid (O)">Grid (O)</button>
+    <button class="btn" id="btnFull" title="Fullscreen (F)">Fullscreen</button>
+    <button class="btn" id="btnPrint" title="Print / Save as PDF">PDF</button>
+  </div>
+</header>
+<div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+
+<main class="stage">
+  <div class="deck" id="deck">
+
+    <!-- SLIDE 1: TITLE -->
+    <section class="slide active" data-title="ROBOKRITI SafeCircle — Overview">
+      <div class="hero-center">
+        <div class="slide-eyebrow">India-First Dementia Safety Wearable &amp; Care Ecosystem</div>
+        <h1 class="hero-title">ROBOKRITI SafeCircle</h1>
+        <p class="hero-tagline">Technology that protects independence &mdash; engineered for Indian homes, networks, and budgets.</p>
+        <p class="slide-sub" style="margin-bottom: 4px;">
+          A screenless, autonomous 4G LTE Cat-1 bis wrist safety band paired with a ₹439 BLE Home Beacon, zero-power NFC/QR Good Samaritan identity, and an elderly-accessible multilingual Care Circle app.
+        </p>
+        <div class="pill-row">
+          <div class="hero-pill"><strong>3 Staged Models</strong>V1 Prototype &bull; V2 Voice/AI &bull; V3 Production</div>
+          <div class="hero-pill"><strong>9.4 &ndash; 12.9 Days Battery</strong>Up to 50.3% energy saved via Home Beacon</div>
+          <div class="hero-pill"><strong>&gt;90% Lower 2-Yr Cost</strong>₹6,499&ndash;₹6,999 retail &bull; ₹65.8/mo OPEX at scale</div>
+          <div class="hero-pill"><strong>Zero-Power Rescue ID</strong>Passive NFC + QR works even at 0% battery</div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>ROBOKRITI R&amp;D Engineering Blueprint</span>
+        <span>Use &larr; &rarr; keys to navigate &bull; Press O for Slide Grid &bull; Press F for Fullscreen</span>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: THE HUMAN PROBLEM -->
+    <section class="slide" data-title="Why India Needs SafeCircle">
+      <div class="slide-eyebrow">01 &bull; Clinical &amp; Market Reality</div>
+      <h2 class="slide-title">Dementia Safety Risks Turn Fatal Fast &mdash; Existing Trackers Fail India</h2>
+      <div class="grid-4" style="margin-bottom: 16px;">
+        <div class="card card-accent-blue">
+          <div class="kpi-num" style="color:#60a5fa;">8.8M</div>
+          <div class="kpi-lbl">Indians 60+ with Dementia</div>
+          <div class="kpi-desc">7.4% prevalence (9.6% women vs 6.3% men); rural burden 2&times; urban.</div>
+        </div>
+        <div class="card card-accent-amber">
+          <div class="kpi-num" style="color:#fbbf24;">&gt;90%</div>
+          <div class="kpi-lbl">India Treatment Gap</div>
+          <div class="kpi-desc">Family carers provide ~10&times; more care than healthcare staff.</div>
+        </div>
+        <div class="card card-accent-red">
+          <div class="kpi-num" style="color:#f87171;">7.58&times;</div>
+          <div class="kpi-lbl">Higher Incident Fall Rate</div>
+          <div class="kpi-desc">77% annual fall rate in Lewy body (DLB), 90% in PDD; 30% lie &ge;1 hr.</div>
+        </div>
+        <div class="card card-accent-red">
+          <div class="kpi-num" style="color:#f87171;">73%</div>
+          <div class="kpi-lbl">Walking Deaths &lt;500 m</div>
+          <div class="kpi-desc">Forensic data: 0/19 had GPS; 78% go missing from their own home.</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Why Global Trackers Fail Indian Households</h3>
+          <ul class="clean">
+            <li><strong>Cost Barrier:</strong> AngelSense, Medical Guardian &amp; SmartSole cost <strong>₹1.0L&ndash;₹1.39L over 2 years</strong> (exceeding annual rural care cost of ₹66,025).</li>
+            <li><strong>Daily Charging Trap:</strong> 16&ndash;24 hr batteries die before an elopement occurs.</li>
+            <li><strong>Indian RCC Indoor Blindness:</strong> Concrete flats block GPS, triggering phantom geofence alarms and rapid drain.</li>
+            <li><strong>Telecom Mismatch:</strong> No nationwide Indian LTE-M; Jio/Airtel/Vi lock smartwatch eSIMs to ₹399+/mo postpaid plans.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Why Generic Consumer Gadgets Are Unsafe</h3>
+          <ul class="clean">
+            <li><strong>Apple AirTags:</strong> Zero live GPS outside iPhone crowds and emit <strong>non-disableable anti-stalking beeps</strong> after 8&ndash;24 h, frightening wearers.</li>
+            <li><strong>Shoe Insoles:</strong> Fail in Indian homes where people walk barefoot indoors and remove shoes at temples/homes.</li>
+            <li><strong>Touchscreen Watches:</strong> 60.6% of PwDs struggle to operate tracking devices; 25&ndash;33% refuse or abandon bulky trackers.</li>
+            <li><strong>Wrist-Only Fall Alerts:</strong> Miss slow, sliding geriatric collapses while false-alarming when dropped.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="slide-footer"><span>ROBOKRITI SafeCircle</span><span>Slide 2 / 12</span></div>
+    </section>
+
+    <!-- SLIDE 3: ECOSYSTEM & 4 INNOVATIONS -->
+    <section class="slide" data-title="Ecosystem & 4 Core Differentiators">
+      <div class="slide-eyebrow">02 &bull; Architecture &amp; Differentiators</div>
+      <h2 class="slide-title">4-Pillar Ecosystem &amp; Four Non-Commodity Innovations</h2>
+      <div class="grid-4" style="margin-bottom: 16px;">
+        <div class="card card-accent-teal">
+          <h3>A. SafeCircle Band</h3>
+          <p class="kpi-desc">Screenless matte-graphite 4G LTE Cat-1 bis + multi-GNSS wrist capsule with recessed 3-s SOS, optical wear sensor &amp; NFC/QR.</p>
+        </div>
+        <div class="card card-accent-blue">
+          <h3>B. Home Beacon</h3>
+          <p class="kpi-desc">₹439 plug-in ESP32-C3 BLE anchor that detects indoor presence, halts futile GPS hunting, and catches door exits in &lt;15 s.</p>
+        </div>
+        <div class="card card-accent-purple">
+          <h3>C. ROBOKRITI Cloud</h3>
+          <p class="kpi-desc">AWS IoT Core Mumbai (MQTTS) + Firebase Firestore + Cloud Functions tiered escalation + Indian DLT SMS dead-zone fallback.</p>
+        </div>
+        <div class="card card-accent-green">
+          <h3>D. Care Mobile App</h3>
+          <p class="kpi-desc">Elderly-accessible multilingual Flutter app with Honest Maps error circles, Care Circle claim-lock &amp; Guided Dial-112 card.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Innovation 1 &amp; 2: Power + Zero-Power Safety</h3>
+          <ul class="clean">
+            <li><strong>BLE Home Beacon Power-Gating &amp; Exit-Latch:</strong> Keeps GNSS off indoors (saving <strong>44.4% to 50.3% daily energy</strong>) while IMU + beacon loss fires sub-15 s Nighttime Exit Watch alerts.</li>
+            <li><strong>Zero-Power NFC + Privacy-Gated QR ID:</strong> Leverages India's universal UPI QR fluency; stays readable at 0% battery &amp; 0 signal, hiding home address until caregiver activates Lost Mode.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Innovation 3 &amp; 4: Geriatric Accuracy + India OPEX</h3>
+          <ul class="clean">
+            <li><strong>Optical-Skin-Gated Edge-AI Fall &amp; Long-Lie Pipeline:</strong> Fuses LSM6DSOX posture/immobility AI with VCNL4040 IR skin check &mdash; blocking dropped-band false alarms while targeting slow DLB/PDD collapses.</li>
+            <li><strong>Resilient ₹65.8/mo Care Circle Escalation:</strong> Dual-path MQTTS + direct SMS fallback + T+0/60/180 s multi-tier human claim-lock built for Indian cellular realities.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="slide-footer"><span>ROBOKRITI SafeCircle</span><span>Slide 3 / 12</span></div>
+    </section>
+
+    <!-- SLIDE 4: ALL THREE MODELS -->
+    <section class="slide" data-title="All 3 Models — V1, V2 & V3">
+      <div class="slide-eyebrow">03 &bull; Product Lineup</div>
+      <h2 class="slide-title">Three Staged Models: From ₹4,778 Prototype to ₹3,123 Volume COGS</h2>
+      <div class="grid-3">
+        <div class="card card-accent-amber">
+          <h3>ROBOKRITI V1 <span class="badge b-amber">Prototype / MVP</span></h3>
+          <div style="font-size:12px;color:#fcd34d;font-weight:700;margin-bottom:8px;">₹4,778 (Tier A PoC) &bull; ₹9,572 (Tier B 4L PCB + Beacon)</div>
+          <ul class="clean">
+            <li><strong>Hardware:</strong> ESP32-C3/S3-MINI-1, SIMCom A7672S or Quectel EC200U-CNAA (built-in GNSS), LIS2DW12 (3 &mu;A), VCNL4040 &amp; MAX17048 (Tier B).</li>
+            <li><strong>Core Tracking:</strong> Standalone 4G LTE + multi-GNSS + BLE Home Beacon exit-latch + adaptive motion tracking.</li>
+            <li><strong>Emergency:</strong> 3-s SOS + 15-s Runner Mode + Care Circle escalation + direct SMS fallback + offline flash sync.</li>
+            <li><strong>Offline ID:</strong> Passive NTAG215/216 NFC + QR Good Samaritan web card.</li>
+            <li><strong>Battery:</strong> 6.7&ndash;9.4 days (Tier B custom PCB). <em>No 2-way voice.</em></li>
+          </ul>
+        </div>
+
+        <div class="card card-accent-teal">
+          <h3>ROBOKRITI V2 <span class="badge b-teal">Voice + Edge-AI</span></h3>
+          <div style="font-size:12px;color:#5eead4;font-weight:700;margin-bottom:8px;">₹16,724 (Tier C Prototype incl. Home Beacon)</div>
+          <ul class="clean">
+            <li><strong>Hardware Upgrades:</strong> ST LSM6DSOX 6-axis AI IMU, Knowles MEMS mic + 1 W mini speaker + Class-D amp, GORE ePTFE vents, TI BQ25180, magnetic pogo.</li>
+            <li><strong>Auto-Answer VoLTE Voice:</strong> Whitelisted family calls auto-connect onto wrist speakerphone after calm haptic chimes.</li>
+            <li><strong>Smart Fall &amp; Long-Lie:</strong> On-wrist optical-gated impact/slump + immobility detection.</li>
+            <li><strong>Intelligence:</strong> Routine Corridor departure alerts, Caregiver Phone Escort Auto-Suppress, Last-30m BLE Finder &amp; Dignity Mode.</li>
+            <li><strong>Endurance:</strong> 9.4 days adaptive + 29.3 h Emergency Reserve (700 mAh); Target IP67.</li>
+          </ul>
+        </div>
+
+        <div class="card card-accent-blue">
+          <h3>ROBOKRITI V3 <span class="badge b-blue">Production Ready</span></h3>
+          <div style="font-size:12px;color:#93c5fd;font-weight:700;margin-bottom:8px;">₹3,123 COGS @ 10k &bull; ₹6,499&ndash;₹6,999 Retail</div>
+          <ul class="clean">
+            <li><strong>Ultra-Compact Silicon:</strong> Nordic nRF52840 (21&times; lower BLE scan power), Quectel EG915U-CN (46% smaller), u-blox MAX-M10S (1.5 m CEP, -167 dBm), MFF2 eSIM.</li>
+            <li><strong>Sleek Everyday Form:</strong> 45.0 &times; 25.5 &times; 12.4 mm capsule, <strong>~40 g total weight</strong> with medical-grade perforated LSR strap.</li>
+            <li><strong>Best-in-Class Battery:</strong> <strong>10.1&ndash;12.9 days</strong> adaptive (550&ndash;700 mAh BIS cell); 57.4 days Ultra-Sleep.</li>
+            <li><strong>Full Indian Compliance:</strong> Target IP68 (2 m/1 h), BIS CRS, WPC ETA, TEC MTCTE, SAR &le;1.6 W/kg, DPDP May 2027 &amp; DoT M2M KYC.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="slide-footer"><span>ROBOKRITI SafeCircle</span><span>Slide 4 / 12</span></div>
+    </section>
+
+    <!-- SLIDE 5: HEAD-TO-HEAD COMPARISON TABLE -->
+    <section class="slide" data-title="V1 vs V2 vs V3 Comparison Matrix">
+      <div class="slide-eyebrow">04 &bull; Technical Benchmark</div>
+      <h2 class="slide-title">Complete Model-by-Model Comparison Matrix</h2>
+      <table class="deck-table">
+        <thead>
+          <tr>
+            <th style="width:19%;">Parameter</th>
+            <th style="width:27%;">ROBOKRITI V1 (Prototype)</th>
+            <th style="width:27%;">ROBOKRITI V2 (Advanced)</th>
+            <th style="width:27%;">ROBOKRITI V3 (Production)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>MCU</td>
+            <td>ESP32-C3 (Tier A) / ESP32-S3-MINI-1 (Tier B)</td>
+            <td>ESP32-S3-MINI-1 (nRF52840 eval option)</td>
+            <td class="col-v3">Nordic nRF52840 (1.5 &mu;A RTC, CryptoCell)</td>
+          </tr>
+          <tr>
+            <td>Cellular &amp; SIM</td>
+            <td>A7672S / EC200U-CNAA; Prepaid Nano-SIM</td>
+            <td>Quectel EC200U-CNAA (LTE+2G+VoLTE); Nano-SIM</td>
+            <td class="col-v3">Quectel EG915U-CN (46% smaller); MFF2 eSIM</td>
+          </tr>
+          <tr>
+            <td>GNSS Engine</td>
+            <td>NEO-M8N (Tier A) / Integrated UC6228CI</td>
+            <td>Integrated UC6228CI / MAX-M10S eval</td>
+            <td class="col-v3">u-blox MAX-M10S (4-GNSS, 1.5 m, 28 mW)</td>
+          </tr>
+          <tr>
+            <td>Motion / Fall / Wear</td>
+            <td>LIS2DW12 (3 &mu;A) + VCNL4040 wear (Tier B)</td>
+            <td>ST LSM6DSOX (Edge-AI) + VCNL4040 wear</td>
+            <td class="col-v3">Geriatric-tuned LSM6DSOX MLC + VCNL4040</td>
+          </tr>
+          <tr>
+            <td>Two-Way Voice</td>
+            <td>Not included</td>
+            <td>Auto-answer VoLTE (Knowles mic + 1 W spk)</td>
+            <td class="col-v3">Full-duplex echo-cancelled VoLTE + GORE vents</td>
+          </tr>
+          <tr>
+            <td>Smart AI &amp; Privacy</td>
+            <td>Home Beacon, Night Watch, Offline NFC/QR</td>
+            <td>+ Routine Corridor, Escort Mode, BLE Finder, Dignity</td>
+            <td class="col-v3">Full suite + DPDP Guardianship &amp; Signed DFOTA</td>
+          </tr>
+          <tr>
+            <td>Battery &amp; Adaptive Life</td>
+            <td>500&ndash;700 mAh &bull; 6.7&ndash;9.4 d (custom PCB)</td>
+            <td>700 mAh &bull; 9.4 d (+29.3 h Emergency Reserve)</td>
+            <td class="col-v3">550&ndash;700 mAh BIS cell &bull; 10.1&ndash;12.9 d (+35 h res.)</td>
+          </tr>
+          <tr>
+            <td>Size, Weight &amp; IP</td>
+            <td>50 &times; 36 &times; 15.5 mm &bull; ~54.2 g &bull; Splash</td>
+            <td>50 &times; 36 &times; 15.5 mm &bull; ~54.2 g &bull; Target IP67</td>
+            <td class="col-v3">45 &times; 25.5 &times; 12.4 mm &bull; ~40 g &bull; Target IP68</td>
+          </tr>
+          <tr>
+            <td>Build / Retail Cost</td>
+            <td>₹4,778 (Tier A) / ₹9,572 (Tier B)</td>
+            <td>₹16,724 (Tier C Prototype + Beacon)</td>
+            <td class="col-v3">₹3,123 COGS @ 10k &bull; ₹6,499&ndash;₹6,999 Retail</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="slide-footer"><span>ROBOKRITI SafeCircle</span><span>Slide 5 / 12</span></div>
+    </section>
+
+    <!-- SLIDE 6: WHAT THE BAND LOOKS LIKE (INDUSTRIAL DESIGN) -->
+    <section class="slide" data-title="What the Wearable Looks Like">
+      <div class="slide-eyebrow">05 &bull; Industrial &amp; Mechanical Design</div>
+      <h2 class="slide-title">What the Band Looks Like: Minimalist Everyday Accessory, Not Hospital Gear</h2>
+      <div class="grid-2">
+        <!-- SVG Band Mockup -->
+        <div class="card" style="justify-content:center; align-items:center; background:#0d1320;">
+          <svg viewBox="0 0 480 340" width="100%" height="100%" style="max-height:360px;">
+            <!-- TOP VIEW -->
+            <text x="118" y="22" fill="#5eead4" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="1">FRONT VIEW (SCREENLESS)</text>
+            <!-- Strap Top/Bottom -->
+            <rect x="88" y="34" width="60" height="72" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+            <rect x="88" y="224" width="60" height="84" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+            <!-- Breathable strap holes -->
+            <circle cx="118" cy="54" r="3" fill="#0d1320"/><circle cx="118" cy="72" r="3" fill="#0d1320"/><circle cx="118" cy="90" r="3" fill="#0d1320"/>
+            <circle cx="118" cy="244" r="3" fill="#0d1320"/><circle cx="118" cy="262" r="3" fill="#0d1320"/><circle cx="118" cy="280" r="3" fill="#0d1320"/>
+            <!-- Matte Graphite Capsule -->
+            <rect x="74" y="96" width="88" height="138" rx="28" fill="#232a36" stroke="#64748b" stroke-width="2.5"/>
+            <rect x="81" y="103" width="74" height="124" rx="22" fill="#181e28" stroke="#475569" stroke-width="1"/>
+            <!-- Subtle Logo + NFC Wave -->
+            <circle cx="118" cy="152" r="14" fill="none" stroke="#14b8a6" stroke-width="1.6" opacity="0.65"/>
+            <circle cx="118" cy="152" r="7" fill="none" stroke="#3b82f6" stroke-width="1.6" opacity="0.85"/>
+            <text x="118" y="190" fill="#94a3b8" font-size="9" font-weight="700" text-anchor="middle" letter-spacing="1.5">ROBOKRITI</text>
+            <!-- Recessed SOS Button on Right Edge -->
+            <rect x="161" y="144" width="6" height="34" rx="3" fill="#ef4444" stroke="#fca5a5" stroke-width="1"/>
+            <line x1="169" y1="161" x2="210" y2="161" stroke="#f87171" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="213" y="158" fill="#fca5a5" font-size="10" font-weight="700">Recessed 3-s SOS</text>
+            <text x="213" y="170" fill="#94a3b8" font-size="9">260 gf tactile ridge</text>
+
+            <!-- BACKPLATE VIEW -->
+            <text x="366" y="22" fill="#60a5fa" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="1">WRIST BACKPLATE (ZERO-POWER ID)</text>
+            <rect x="336" y="34" width="60" height="72" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+            <rect x="336" y="224" width="60" height="84" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+            <rect x="322" y="96" width="88" height="138" rx="28" fill="#1f2633" stroke="#64748b" stroke-width="2"/>
+            <!-- VCNL4040 IR Window -->
+            <rect x="351" y="110" width="30" height="12" rx="6" fill="#090d16" stroke="#3b82f6" stroke-width="1"/>
+            <text x="366" y="132" fill="#93c5fd" font-size="7.5" text-anchor="middle">IR WEAR SENSOR</text>
+            <!-- Laser-Etched QR Block -->
+            <rect x="346" y="139" width="40" height="40" rx="4" fill="#f8fafc"/>
+            <rect x="350" y="143" width="10" height="10" fill="#0f172a"/><rect x="372" y="143" width="10" height="10" fill="#0f172a"/>
+            <rect x="350" y="165" width="10" height="10" fill="#0f172a"/><rect x="363" y="155" width="8" height="8" fill="#0f172a"/>
+            <rect x="373" y="166" width="8" height="8" fill="#0f172a"/><rect x="362" y="144" width="6" height="6" fill="#0f172a"/>
+            <text x="366" y="190" fill="#fde047" font-size="7.5" font-weight="700" text-anchor="middle">EMERGENCY / मदद</text>
+            <!-- 4 Magnetic Pogo Pads -->
+            <circle cx="348" cy="208" r="4" fill="#f59e0b"/><circle cx="360" cy="208" r="4" fill="#f59e0b"/>
+            <circle cx="372" cy="208" r="4" fill="#f59e0b"/><circle cx="384" cy="208" r="4" fill="#f59e0b"/>
+            <text x="366" y="223" fill="#fcd34d" font-size="7.5" text-anchor="middle">MAGNETIC POGO</text>
+            <!-- Dimensions caption -->
+            <text x="240" y="330" fill="#9aa7c2" font-size="10.5" text-anchor="middle">V3 Target: 45.0 &times; 25.5 &times; 12.4 mm &bull; ~40 g total &bull; Matte Graphite PC+GF + Perforated LSR Strap</text>
+          </svg>
+        </div>
+
+        <!-- Internal 6-Layer Stackup -->
+        <div class="card">
+          <h3>6-Layer Internal Stack-Up (Top to Wrist)</h3>
+          <ul class="clean" style="gap: 8px;">
+            <li><strong>Layer 1 &mdash; Top Shell &amp; NFC:</strong> Matte-graphite polymer shell housing a ferrite-shielded passive <strong>NTAG216</strong> NFC inlay.</li>
+            <li><strong>Layer 2 &mdash; Skyward Antennas:</strong> GNSS ceramic + 4G LTE FPC/LDS antennas on the top outer rim for maximum sky view &amp; SAR safety (&le;1.6 W/kg).</li>
+            <li><strong>Layer 3 &mdash; 4L/6L Main PCB:</strong> Star-routed 3 A cellular power rails, MCU, modem, LSM6DSOX AI IMU, BQ25180 PMIC, MAX17048 gauge, eSIM.</li>
+            <li><strong>Layer 4 &mdash; Isolated Battery Bay:</strong> 550&ndash;700 mAh BIS Li-Po cell separated from modem PA by a 0.5 mm Nomex thermal pad + NTC cutoff.</li>
+            <li><strong>Layer 5 &mdash; IP68 Acoustic &amp; O-Ring Seals:</strong> Compressed silicone gasket + dual <strong>GORE GAW334 ePTFE vents</strong> (&lt;2 dB loss, 2 m / 1 hr water block).</li>
+            <li><strong>Layer 6 &mdash; Skin Backplate:</strong> Flush VCNL4040 IR window, blind-snap 4-pin magnetic pogo charger, permanent laser-etched Emergency QR.</li>
+          </ul>
+          <div style="margin-top:auto;padding-top:10px;font-size:11.5px;color:#5eead4;">
+            <strong>Ergonomics:</strong> Breathable perforated silicone avoids Indian summer sweat dermatitis; zero distracting lights or chirps.
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer"><span>ROBOKRITI SafeCircle</span><span>Slide 6 / 12</span></div>
+    </section>
+
+    <!-- SLIDE 7: WHAT THE APPLICATION LOOKS LIKE -->
+    <section class="slide" data-title="What the Mobile App Looks Like">
+      <div class="slide-eyebrow">06 &bull; ROBOKRITI Care (Flutter App)</div>
+      <h2 class="slide-title">What the App Looks Like: Built for Elderly Spouses &amp; Remote Children</h2>
+      <div class="grid-3" style="margin-bottom: 10px;">
+        <!-- Screen 1: Dashboard -->
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-hdr"><span>ROBOKRITI Care</span><span>EN / हिं</span></div>
+          <div class="status-banner-ok">
+            <div style="font-size:10px;color:#a7f3d0;font-weight:700;">HOME BEACON ACTIVE</div>
+            <div style="font-size:15px;font-weight:800;color:#fff;margin:2px 0;">Papa is At Home &mdash; Safe</div>
+            <div style="font-size:10.5px;color:#d1fae5;">Living Room &bull; Updated 18s ago</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div style="background:#162033;border-radius:8px;padding:8px;">
+              <div style="font-size:9.5px;color:#94a3b8;">BATTERY</div>
+              <div style="font-size:14px;font-weight:800;color:#4ade80;">9 Days Left</div>
+              <div style="font-size:9.5px;color:#cbd5e1;">78% &bull; Healthy</div>
+            </div>
+            <div style="background:#162033;border-radius:8px;padding:8px;">
+              <div style="font-size:9.5px;color:#94a3b8;">BAND STATUS</div>
+              <div style="font-size:14px;font-weight:800;color:#60a5fa;">On Wrist</div>
+              <div style="font-size:9.5px;color:#cbd5e1;">4G Strong</div>
+            </div>
+          </div>
+          <div class="phone-btn-grid">
+            <div class="p-btn p-btn-primary">Live Map</div>
+            <div class="p-btn">Gentle Ping</div>
+            <div class="p-btn p-btn-green">Call Band</div>
+            <div class="p-btn p-btn-red">Lost Mode</div>
+          </div>
+        </div>
+
+        <!-- Screen 2: Honest Map -->
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-hdr"><span>Live Location</span><span style="color:#5eead4;">Exact &plusmn;4 m</span></div>
+          <div style="flex:1;background:#132238;border-radius:10px;border:1px solid #263d5e;position:relative;overflow:hidden;min-height:145px;">
+            <!-- Stylized Map Grid + Confidence Circle -->
+            <svg viewBox="0 0 220 150" width="100%" height="100%">
+              <line x1="0" y1="45" x2="220" y2="62" stroke="#1f3554" stroke-width="8"/>
+              <line x1="85" y1="0" x2="105" y2="150" stroke="#1f3554" stroke-width="10"/>
+              <line x1="155" y1="0" x2="145" y2="150" stroke="#1b2e4a" stroke-width="5"/>
+              <path d="M 92 140 L 96 76 L 146 72" fill="none" stroke="#14b8a6" stroke-width="3" stroke-dasharray="5,3"/>
+              <circle cx="146" cy="72" r="26" fill="rgba(59,130,246,0.22)" stroke="#60a5fa" stroke-width="1.5"/>
+              <circle cx="146" cy="72" r="6" fill="#3b82f6" stroke="#fff" stroke-width="2"/>
+              <text x="12" y="138" fill="#93c5fd" font-size="9" font-weight="700">Near Gomti Nagar Park &bull; 12s ago</text>
+            </svg>
+          </div>
+          <div style="background:#162033;border-radius:8px;padding:8px;font-size:10.5px;color:#cbd5e1;">
+            <strong style="color:#fff;">Confidence:</strong> 3D Multi-GNSS (11 sats) &bull; Walking 2.4 km/h
+          </div>
+          <div class="phone-btn-grid">
+            <div class="p-btn p-btn-primary">Google Maps Route</div>
+            <div class="p-btn">Last-30m BLE</div>
+          </div>
+        </div>
+
+        <!-- Screen 3: SOS Emergency Centre -->
+        <div class="phone-frame" style="border-color:#dc2626;">
+          <div class="phone-notch"></div>
+          <div class="phone-hdr"><span style="color:#fca5a5;">SOS ACTIVE &bull; 15s LIVE</span><span>00:42</span></div>
+          <div class="status-banner-sos">
+            <div style="font-size:10px;color:#fecaca;font-weight:700;">NIGHTTIME EXIT / SOS PRESSED</div>
+            <div style="font-size:14.5px;font-weight:800;color:#fff;margin:2px 0;">Papa Needs Help Now</div>
+            <div style="font-size:10.5px;color:#fee2e2;">340 m from Home &bull; Moving West</div>
+          </div>
+          <div class="p-btn p-btn-green" style="padding:10px;font-size:12px;">TAP: &ldquo;I&rsquo;M RESPONDING&rdquo; (CLAIM LOCK)</div>
+          <div style="background:#1a1520;border:1px solid #472434;border-radius:8px;padding:7px;font-size:10px;color:#e2e8f0;">
+            <strong>Care Circle:</strong> Mom (Notified) &bull; Sister (SMS Sent @ 60s) &bull; Guard (Escalates in 18s)
+          </div>
+          <div class="phone-btn-grid">
+            <div class="p-btn p-btn-primary">Auto-Call Band</div>
+            <div class="p-btn p-btn-red">Guided Dial 112</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:#9aa7c2;text-align:center;">
+        <strong style="color:#5eead4;">12 Full Screens:</strong> Dashboard &bull; Honest Map &bull; History &bull; Safe Zones/Night Watch &bull; SOS Centre &bull; Care Circle &bull; Device Status &bull; Fall Alerts &bull; Battery Predictor &bull; Tracking Presets &bull; Band &amp; NFC/QR Config &bull; DPDP Privacy &amp; Consent &bull; <em>18&ndash;20 sp large fonts, WCAG AAA contrast.</em>
+      </div>
+      <div class="slide-footer"><span>ROBOKRITI SafeCircle</span><span>Slide 7 / 12</span></div>
+    </section>
+
+    <!-- SLIDE 8: SOS ESCALATION & BATTERY ENDURANCE -->
+    <section class="slide" data-title="SOS Escalation & Battery Physics">
+      <div class="slide-eyebrow">07 &bull; Reliability &amp; Power Engineering</div>
+      <h2 class="slide-title">Fail-Safe Emergency Escalation &amp; Multi-Week Battery Endurance</h2>
+      <div class="flow-steps">
+        <div class="step-box">
+          <div class="step-time">T + 0 sec &bull; Band</div>
+          <h4>Trigger &amp; Dual Dispatch</h4>
+          <p>3-s SOS, Fall+Skin+Immobility, or Night Exit wakes 15-s Runner Mode &rarr; MQTTS QoS 1 + cached fix. Auto-sends <strong>direct SMS</strong> if no ACK in 15 s.</p>
+        </div>
+        <div class="step-box">
+          <div class="step-time">T + 0 sec &bull; Tier 1</div>
+          <h4>Primary Critical Push</h4>
+          <p>DND-bypassing loud alarm rings Primary Caregiver phone with live map, confidence radius &amp; 1-tap auto-answer VoLTE call.</p>
+        </div>
+        <div class="step-box">
+          <div class="step-time">T + 60 sec &bull; Tier 2</div>
+          <h4>All Family + DLT SMS</h4>
+          <p>If unclaimed, escalates to all Care Circle phones via Push + Indian DLT Transactional SMS (survives killed apps &amp; weak data).</p>
+        </div>
+        <div class="step-box">
+          <div class="step-time">T + 180 sec &bull; Tier 3</div>
+          <h4>Neighbors + Guided 112</h4>
+          <p>Alerts local neighbors/security + IVR ring-through. First responder locks claim; 1-tap <strong>Guided Dial-112</strong> script + Missing PDF.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Adaptive Battery Endurance Comparison (Days / Charge)</h3>
+          <div class="bar-row">
+            <div class="bar-meta"><span><strong>ROBOKRITI V3</strong> (700 mAh + Home Beacon)</span><strong style="color:#60a5fa;">12.9 days</strong></div>
+            <div class="bar-track"><div class="bar-fill" style="width:92%;background:linear-gradient(90deg,#14b8a6,#3b82f6);"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-meta"><span><strong>ROBOKRITI V2</strong> (700 mAh + Home Beacon)</span><strong style="color:#5eead4;">9.4 days</strong></div>
+            <div class="bar-track"><div class="bar-fill" style="width:67%;background:#14b8a6;"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-meta"><span>ROBOKRITI V2 (Without Home Beacon &mdash; RCC Drift)</span><span>5.2 days</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:37%;background:#64748b;"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-meta"><span>CPR Guardian IV / Garmin Bounce 2</span><span>2.0 days</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:14.5%;background:#94a3b8;"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-meta"><span>AngelSense GPS4 / Medical Guardian MGMove</span><span style="color:#fbbf24;">1.0 day (24 h)</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:7.5%;background:#f59e0b;"></div></div>
+          </div>
+          <div class="bar-row" style="margin-bottom:0;">
+            <div class="bar-meta"><span>Apple Watch SE 3 / AngelSense Watch 2</span><span style="color:#f87171;">0.67&ndash;0.75 d (16&ndash;18 h)</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:5.5%;background:#ef4444;"></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>20% Emergency Power Reserve &amp; Dead-Zone Safeguards</h3>
+          <ul class="clean" style="gap:8px;">
+            <li><strong>85% Conservative Usable Capacity:</strong> Models real-world 3.55 V cell brownout cutoff under 2&ndash;3 A cellular RF bursts.</li>
+            <li><strong>700 mAh Recommended Standard:</strong> Rejects 300 mAh (0 h left after one 10-min call) and 1,000 mAh (too bulky on wrist).</li>
+            <li><strong>Hard 20% SoC Reserve:</strong> Automatically halts routine tracking to preserve <strong>29.3 hours</strong> of 5-min SOS tracking (or 10-min VoLTE call + 14.7 h tracking).</li>
+            <li><strong>Offline Flash Ring Buffer:</strong> Caches &ge;40,000 GPS points in dead zones and syncs <strong>latest-first (LIFO)</strong> upon reconnection.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="slide-footer"><span>ROBOKRITI SafeCircle</span><span>Slide 8 / 12</span></div>
+    </section>
+
+    <!-- SLIDE 9: MINIMAL COST ECONOMICS (BOM & OPEX) -->
+    <section class="slide" data-title="Minimal Cost BOM & Monthly OPEX">
+      <div class="slide-eyebrow">08 &bull; India Cost Engineering</div>
+      <h2 class="slide-title">Maximum Practical Safety at Minimal Indian Cost</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Hardware Build Cost Trajectory (INR)</h3>
+          <table class="deck-table" style="margin-bottom:10px;">
+            <thead>
+              <tr><th>Tier / Volume</th><th>Electronics</th><th>PCB/Case/SIM</th><th>Total INR</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Tier A: Budget PoC</td><td>₹3,679</td><td>₹1,099</td><td><strong>₹4,778</strong></td></tr>
+              <tr><td>Tier B: Rec. MVP (+Beacon)</td><td>₹4,223</td><td>₹5,349</td><td><strong>₹9,572</strong></td></tr>
+              <tr><td>Tier C: Voice+AI (+Beacon)</td><td>₹8,225</td><td>₹8,499</td><td><strong>₹16,724</strong></td></tr>
+              <tr><td>V3 COGS @ 1,000 units</td><td>₹3,715</td><td>₹830</td><td><strong>₹4,545</strong></td></tr>
+              <tr><td class="col-v3">V3 COGS @ 10,000 units</td><td class="col-v3">₹2,658</td><td class="col-v3">₹465</td><td class="col-v3"><strong>₹3,123</strong></td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:11.5px;color:#cbd5e1;line-height:1.45;">
+            <strong style="color:#5eead4;">Target Retail (10k scale):</strong> <strong>₹6,499&ndash;₹6,999</strong> (Band + Beacon) &mdash; <em>an 81% drop from Tier C prototype and &gt;90% cheaper over 2 years than Western trackers.</em>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Monthly Recurring OPEX per Device (India)</h3>
+          <table class="deck-table" style="margin-bottom:10px;">
+            <thead>
+              <tr><th>Deployment Scale</th><th>SIM</th><th>Cloud+Maps+SMS</th><th>Total/Mo</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Student Proto (1&ndash;10u)</td><td>₹166*</td><td>₹5 (Free tiers)</td><td><strong>₹171.0</strong></td></tr>
+              <tr><td>Small Pilot (100u)</td><td>₹100</td><td>₹7</td><td><strong>₹107.0</strong></td></tr>
+              <tr><td>Commercial (1,000u)</td><td>₹75</td><td>₹10.3 (AWS IoT)</td><td><strong>₹85.3</strong></td></tr>
+              <tr><td class="col-v3">Mass Scale (5,000u)</td><td class="col-v3">₹55</td><td class="col-v3">₹10.8 (AWS IoT)</td><td class="col-v3"><strong>₹65.8</strong></td></tr>
+            </tbody>
+          </table>
+          <ul class="clean">
+            <li><strong>*BSNL Student Option:</strong> ₹107/35-day plan lowers student OPEX to <strong>~₹97/month</strong>.</li>
+            <li><strong>Zero Cloud Bill Shocks:</strong> AWS IoT Core Mumbai (₹0.82/u/mo) + Google Maps India unlimited native SDK / 70K free Essentials calls + Indian DLT SMS (₹0.18&ndash;₹0.25/SMS) instead of ₹6.60 Firebase Phone Auth SMS.</li>
+            <li><strong>Retail Subscription Target:</strong> <strong>₹99&ndash;₹149/month</strong>.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="slide-footer"><span>ROBOKRITI SafeCircle</span><span>Slide 9 / 12</span></div>
+    </section>
+
+    <!-- SLIDE 10: 8-PHASE DEVELOPMENT ROADMAP -->
+    <section class="slide" data-title="How We Will Build It — 26-Week Plan">
+      <div class="slide-eyebrow">09 &bull; Execution Plan</div>
+      <h2 class="slide-title">How We Will Create It: 8-Phase, 26-Week Student Build Plan (~₹37,000)</h2>
+      <div class="roadmap-grid">
+        <div class="phase-card">
+          <div>
+            <div class="phase-top"><span>PHASE 1</span><span>Wks 1&ndash;2</span></div>
+            <h4>Research &amp; Sourcing</h4>
+            <p>Freeze V1/V2 PRD, run 10 caregiver &amp; 2 clinician interviews, order verified parts from Robu, Evelta &amp; Mouser.</p>
+          </div>
+          <div class="phase-foot"><span>Kit Ready</span><span>₹5,500</span></div>
+        </div>
+        <div class="phase-card">
+          <div>
+            <div class="phase-top"><span>PHASE 2</span><span>Wks 3&ndash;5</span></div>
+            <h4>Electronics Bench PoC</h4>
+            <p>Wire ESP32, I2C sensors (LIS2DW12, VCNL4040, MAX17048), haptic driver &amp; 3-s SOS wake interrupt.</p>
+          </div>
+          <div class="phase-foot"><span>Wake &lt;200 ms</span><span>₹2,000</span></div>
+        </div>
+        <div class="phase-card">
+          <div>
+            <div class="phase-top"><span>PHASE 3</span><span>Wks 6&ndash;9</span></div>
+            <h4>4G LTE &amp; GNSS Stack</h4>
+            <p>Bring up EC200U-CNAA on Jio/Airtel, build MQTTS TLS 1.2, direct SMS dead-zone failover &amp; SPI flash queue.</p>
+          </div>
+          <div class="phase-foot"><span>Cold &lt;35 s</span><span>₹4,000</span></div>
+        </div>
+        <div class="phase-card">
+          <div>
+            <div class="phase-top"><span>PHASE 4</span><span>Wks 10&ndash;13</span></div>
+            <h4>Beacon, Fall &amp; NFC/QR</h4>
+            <p>Flash ESP32-C3 Home Beacon, calibrate optical wear sensor, code fall/immobility FSM &amp; Good Samaritan web card.</p>
+          </div>
+          <div class="phase-foot"><span>Exit &lt;15 s</span><span>₹3,000</span></div>
+        </div>
+        <div class="phase-card">
+          <div>
+            <div class="phase-top"><span>PHASE 5</span><span>Wks 10&ndash;16</span></div>
+            <h4>Flutter Mobile App</h4>
+            <p>Build 12-screen elderly-friendly Care App (Hindi + English, Google Maps India, BLE setup, DND-bypass alerts).</p>
+          </div>
+          <div class="phase-foot"><span>5-Elder UX Test</span><span>₹2,500</span></div>
+        </div>
+        <div class="phase-card">
+          <div>
+            <div class="phase-top"><span>PHASE 6</span><span>Wks 14&ndash;17</span></div>
+            <h4>Cloud &amp; Secure Pairing</h4>
+            <p>Deploy AWS IoT Core + Firestore + T+0/60/180 s escalation + zero-secret QR &amp; ECDH BLE authentication.</p>
+          </div>
+          <div class="phase-foot"><span>Pair &lt;3 min</span><span>₹1,500</span></div>
+        </div>
+        <div class="phase-card">
+          <div>
+            <div class="phase-top"><span>PHASE 7</span><span>Wks 18&ndash;22</span></div>
+            <h4>Custom 4L PCB &amp; Case</h4>
+            <p>Design 4-layer ENIG PCB (star 3 A VBAT, 50 &Omega; RF), fabricate at LionCircuits/PCBPower, SLA-print matte capsule.</p>
+          </div>
+          <div class="phase-foot"><span>Sleep &lt;60 &mu;A</span><span>₹14,000</span></div>
+        </div>
+        <div class="phase-card">
+          <div>
+            <div class="phase-top"><span>PHASE 8</span><span>Wks 23&ndash;26</span></div>
+            <h4>Validation &amp; IEC Prep</h4>
+            <p>14-day healthy elder pilot (N=15), 500-hr ADL false-fall audit, 45 &deg;C thermal soak, IEC dossier for hospital pilot.</p>
+          </div>
+          <div class="phase-foot"><span>&ge;7 d Runtime</span><span>₹4,500</span></div>
+        </div>
+      </div>
+      <div class="slide-footer"><span>ROBOKRITI SafeCircle</span><span>Slide 10 / 12</span></div>
+    </section>
+
+    <!-- SLIDE 11: COMPLIANCE & ETHICAL TESTING -->
+    <section class="slide" data-title="Indian Regulations & Zero-Risk Ethics">
+      <div class="slide-eyebrow">10 &bull; Statutory Governance &amp; Safety</div>
+      <h2 class="slide-title">Indian Regulatory Clearances &amp; Zero-Risk Ethical Validation</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Student Prototype vs. Commercial India Compliance</h3>
+          <table class="deck-table">
+            <thead>
+              <tr><th>Regime</th><th>Student R&amp;D</th><th>Commercial Launch</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>WPC ETA (BLE/NFC)</td><td>Exempt (not for sale)</td><td>Mandatory (₹10k fee + NABL RF)</td></tr>
+              <tr><td>TEC MTCTE (4G IoT)</td><td>Exempt (samples)</td><td>Mandatory finished product (10 yr)</td></tr>
+              <tr><td>BIS CRS (Battery+Band)</td><td>Exempt local R&amp;D</td><td>IS 16046-2 + IS 16047-3 + 62368-1</td></tr>
+              <tr><td>DoT SAR Exposure</td><td>Skyward ant design</td><td>Lab test &le;1.6 W/kg (1 g) + box label</td></tr>
+              <tr><td>DPDP Act &amp; Rules 2025</td><td>Consent by design</td><td>Mandatory 13 May 2027 (22 lang, 72h breach, verified guardian if appointed)</td></tr>
+              <tr><td>CDSCO Medical Rules</td><td>N/A</td><td><strong>Exempt as Personal Safety Aid</strong> (no medical diagnosis/SpO2 claims)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h3>3-Stage ICMR-Compliant Ethical Validation</h3>
+          <ul class="clean" style="gap:9px;">
+            <li><strong>Golden Rule:</strong> Never expose a person living with dementia to unvalidated hardware, simulated wandering, or fall-induction experiments.</li>
+            <li><strong>Stage 1 (Weeks 1&ndash;18):</strong> Bench RF, RCC indoor tests, Faraday SMS failover, IP67 immersion, and padded-mat fall tests using <strong>engineers &amp; healthy young adults only</strong>.</li>
+            <li><strong>Stage 2 (Weeks 19&ndash;22):</strong> 14-day ergonomic &amp; false-positive wear pilot with <strong>15&ndash;20 cognitively healthy older adults (60&ndash;80 yrs)</strong> + family caregivers.</li>
+            <li><strong>Stage 3 (Post-V2 Hospital Pilot):</strong> Strictly after <strong>Institutional Ethics Committee (IEC) approval</strong> (ICMR 2017 Sec. 6.8) with capacity evaluation, written consent/LAR + ongoing wearer assent, pictorial 3-point cards, and observational wear only.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="slide-footer"><span>ROBOKRITI SafeCircle</span><span>Slide 11 / 12</span></div>
+    </section>
+
+    <!-- SLIDE 12: CLOSING SUMMARY -->
+    <section class="slide" data-title="Summary & Next Steps">
+      <div class="hero-center">
+        <div class="slide-eyebrow">11 &bull; Strategic Summary</div>
+        <h2 class="slide-title" style="font-size:36px; margin-bottom:6px;">Start With Tier B V1 MVP &mdash; Scale to V3 Across India</h2>
+        <p class="slide-sub">
+          ROBOKRITI SafeCircle is neither a distracting smartwatch nor a generic GPS brick. Every single gram, microamp, and rupee solves a documented dementia safety failure.
+        </p>
+        <div class="grid-3" style="flex:0;">
+          <div class="card card-accent-amber">
+            <h3>Immediate Action (Month 1&ndash;2)</h3>
+            <p class="kpi-desc">Procure ₹4,778 Tier A bench kit + ₹439 Home Beacon, validate EC200U-CNAA on Jio/Airtel, and test 15-second door-exit &amp; SMS failover.</p>
+          </div>
+          <div class="card card-accent-teal">
+            <h3>MVP Milestone (Month 4&ndash;6)</h3>
+            <p class="kpi-desc">Spin ₹9,572 custom 4-layer PCB (achieving &lt;60 &mu;A sleep &amp; 9.4-day battery), ship 12-screen Flutter Care App, complete 14-day healthy elder pilot.</p>
+          </div>
+          <div class="card card-accent-blue">
+            <h3>Commercial Scale (V3)</h3>
+            <p class="kpi-desc">Shrink to 40 g nRF52840 + EG915U + MAX-M10S + eSIM capsule (₹3,123 COGS @ 10k), complete BIS/WPC/TEC/DPDP &amp; launch at ₹6,499&ndash;₹6,999.</p>
+          </div>
+        </div>
+        <div style="margin-top:8px;padding:14px 18px;border-radius:10px;background:rgba(20,184,166,0.1);border:1px solid rgba(20,184,166,0.35);font-size:14px;color:#e2e8f0;text-align:center;">
+          <strong>ROBOKRITI SafeCircle</strong> &mdash; <em>Technology that protects independence.</em>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Press PDF button or Ctrl+P to export slides</span>
+        <span>Slide 12 / 12</span>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- Slide Overview Grid -->
+<div class="overview-overlay" id="overview">
+  <div style="max-width:1200px;margin:0 auto 16px auto;display:flex;justify-content:space-between;align-items:center;">
+    <h2 style="font-size:18px;font-weight:700;">Slide Overview &mdash; Click Any Slide to Jump</h2>
+    <button class="btn" id="btnCloseGrid">Close (Esc)</button>
+  </div>
+  <div class="overview-grid" id="overviewGrid"></div>
+</div>
+
+<script>
+(function() {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  const overview = document.getElementById('overview');
+  const overviewGrid = document.getElementById('overviewGrid');
+  let idx = 0;
+
+  function update() {
+    slides.forEach((s, i) => s.classList.toggle('active', i === idx));
+    counter.textContent = `${idx + 1} / ${slides.length}`;
+    progress.style.width = `${((idx + 1) / slides.length) * 100}%`;
+    document.querySelectorAll('.thumb').forEach((t, i) => t.classList.toggle('current', i === idx));
+  }
+
+  function go(n) {
+    idx = Math.max(0, Math.min(slides.length - 1, n));
+    update();
+  }
+
+  function toggleOverview(force) {
+    const open = force !== undefined ? force : !overview.classList.contains('open');
+    overview.classList.toggle('open', open);
+  }
+
+  // Populate overview thumbnails
+  slides.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'thumb' + (i === 0 ? ' current' : '');
+    div.innerHTML = `<div class="thumb-num">SLIDE ${i + 1}</div><div class="thumb-title">${s.dataset.title || 'Slide ' + (i + 1)}</div>`;
+    div.addEventListener('click', () => { go(i); toggleOverview(false); });
+    overviewGrid.appendChild(div);
+  });
+
+  document.getElementById('btnPrev').addEventListener('click', () => go(idx - 1));
+  document.getElementById('btnNext').addEventListener('click', () => go(idx + 1));
+  document.getElementById('btnGrid').addEventListener('click', () => toggleOverview());
+  document.getElementById('btnCloseGrid').addEventListener('click', () => toggleOverview(false));
+  document.getElementById('btnPrint').addEventListener('click', () => window.print());
+  document.getElementById('btnFull').addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      if (!overview.classList.contains('open')) { e.preventDefault(); go(idx + 1); }
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      if (!overview.classList.contains('open')) { e.preventDefault(); go(idx - 1); }
+    } else if (e.key === 'Home') {
+      go(0);
+    } else if (e.key === 'End') {
+      go(slides.length - 1);
+    } else if (e.key === 'o' || e.key === 'O') {
+      toggleOverview();
+    } else if (e.key === 'Escape') {
+      toggleOverview(false);
+    } else if (e.key === 'f' || e.key === 'F') {
+      document.getElementById('btnFull').click();
+    }
+  });
+
+  // Basic touch swipe for mobile/tablet presenting
+  let touchX = 0;
+  window.addEventListener('touchstart', e => { touchX = e.changedTouches[0].screenX; }, { passive: true });
+  window.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].screenX - touchX;
+    if (Math.abs(dx) > 50 && !overview.classList.contains('open')) {
+      go(dx < 0 ? idx + 1 : idx - 1);
+    }
+  }, { passive: true });
+
+  update();
+})();
+</script>
+</body>
+</html>
